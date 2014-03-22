@@ -748,11 +748,11 @@ class Writer {
 			case SHDShape4(data):
 				writeRect(data.shapeBounds);
 				writeRect(data.edgeBounds);
+				bits.flush();
 				bits.writeBits(5, 0);
 				bits.writeBit(data.useWinding);
 				bits.writeBit(data.useNonScalingStroke);
 				bits.writeBit(data.useScalingStroke);
-				bits.flush();
 				writeShapeWithStyle(4, data.shapes);
 		}
 
