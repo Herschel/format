@@ -46,7 +46,7 @@ class Writer {
 
 	var output : haxe.io.Output;
 	var o : haxe.io.BytesOutput;
-	var compressed : Bool;
+	var compression : SWFCompression;
 	var bits : format.tools.BitsOutput;
 
 	public function new(o) {
@@ -94,8 +94,14 @@ class Writer {
 	}
 
 	public function writeHeader( h : SWFHeader ) {
-		compressed = h.compressed;
-		output.writeString( compressed ? "CWS" : "FWS" );
+		compression = h.compression;
+		output.writeString(
+			switch( compression ) {
+				case SCUncompressed:	"FWS";
+				case SCDeflate:			"CWS";
+				case SCLZMA:			"ZWS";
+			}
+		);
 		output.writeByte(h.version);
 		o = new haxe.io.BytesOutput();
 		bits = new format.tools.BitsOutput(o);
@@ -1446,7 +1452,13 @@ class Writer {
 		o.writeUInt16(0); // end tag
 		var bytes = o.getBytes();
 		var size = bytes.length;
-		if( compressed ) bytes = format.tools.Deflate.run(bytes);
+		// Compress the SWF.
+		switch( compression )
+		{
+			case SCUncompressed: // No compression
+			case SCDeflate: bytes = format.tools.Deflate.run(bytes);
+			case SCLZMA: throw "Writing LZMA compressed SWFs is not supported.";
+		}
 		#if haxe3
 		output.writeInt32(size + 8);
 		#else

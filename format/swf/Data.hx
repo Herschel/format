@@ -68,11 +68,17 @@ enum SWFTag {
 
 typedef SWFHeader = {
 	var version : Int;
-	var compressed : Bool;
+	var compression : SWFCompression;
 	var width : Int;
 	var height : Int;
 	var fps : Fixed8;
 	var nframes : Int;
+}
+
+enum SWFCompression {
+	SCUncompressed;
+	SCDeflate;
+	SCLZMA;
 }
 
 typedef AS3Context = {

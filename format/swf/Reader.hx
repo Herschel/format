@@ -571,27 +571,52 @@ class Reader {
 
 	public function readHeader() : SWFHeader {
 		var tag = i.readString(3);
-		var compressed;
-		if( tag == "CWS" )
-			compressed = true;
-		else if( tag == "FWS" )
-			compressed = false;
-		else
-			throw error('Unimplemented compression: $tag');
+		var compression: SWFCompression = switch( tag ) {
+			case "FWS": SCUncompressed;
+			case "CWS": SCDeflate;
+			case "ZWS": SCLZMA;
+			case _:		throw error('Invalid SWF');
+		};
 		version = i.readByte();
 		var size = readInt();
-		if( compressed ) {
-			var bytes = format.tools.Inflate.run(i.readAll());
-			if( bytes.length + 8 != size ) throw error();
-			i = new haxe.io.BytesInput(bytes);
+		// Decompress the SWF.
+		switch( compression ) {
+			case SCUncompressed:
+				// Already uncompressed.
+
+			case SCDeflate:
+				var bytes = format.tools.Inflate.run(i.readAll());
+				if( bytes.length + 8 != size ) throw error();
+				i = new haxe.io.BytesInput(bytes);
+
+			case SCLZMA:
+				#if flash
+				// SWF uses a mangled SWF header.
+				// Rerrange it to the standard LZMA format.
+				var o = new haxe.io.BytesOutput();
+				o.bigEndian = false;
+				i.readInt32();          // Compressed length
+				o.write(i.read(5));     // LZMA properties
+				o.writeInt32(size - 8); // Uncompressed length (64-bit, minus SWF header)
+				o.writeInt32(0);
+				o.write(i.readAll());   // Compressed data
+				var byteArray = o.getBytes().getData();
+				byteArray.uncompress(flash.utils.CompressionAlgorithm.LZMA);
+				var bytes = haxe.io.Bytes.ofData(byteArray);
+				if( bytes.length + 8 != size ) throw error();
+				i = new haxe.io.BytesInput(bytes);
+				#else
+				throw error("Reading LZMA compressed SWFs is not supported on this platform.");
+				#end
 		}
+
 		bits = new format.tools.BitsInput(i);
 		var r = readRect();
 		var fps = readFixed8();
 		var nframes = i.readUInt16();
 		return {
 			version : version,
-			compressed : compressed,
+			compression : compression,
 			width : Std.int(r.right/20),
 			height : Std.int(r.bottom/20),
 			fps : fps,
