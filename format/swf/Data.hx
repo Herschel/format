@@ -62,6 +62,10 @@ enum SWFTag {
 	TJPEGTables( data : haxe.io.Bytes );
 	TBinaryData( id : Int, data : haxe.io.Bytes );
 	TSound( data : Sound );
+	TStartSound( id: Int, info: StartSoundInfo );
+	TStartSound2( className: String, info: StartSoundInfo );
+	TSoundStream( info: SoundStream );
+	TSoundStreamBlock( data : haxe.io.Bytes );
 	TScenes(scenes:Array<{offset:Int, name:String}>, labels:Array<{offset:Int, name:String}>);
 	TUnknown( id : Int, data : haxe.io.Bytes );
 }
@@ -485,6 +489,34 @@ enum SoundRate {
    SR11k; // 11025 Hz
    SR22k; // 22050 Hz
    SR44k; // 44100 Hz
+}
+
+typedef StartSoundInfo = {
+	var stop : Bool;       // Stops instances of this sound instead of playing
+	var noMultiple : Bool; // Plays if no instance is currently playing
+	var numLoops : Null<Int>;
+	var startPos : Null<Int>;
+	var endPos : Null<Int>;
+	var envelope : Null<Array<SoundEnvelopePoint>>;
+}
+
+typedef SoundEnvelopePoint = {
+	var pos : Int; // Position of the point in 44KHz samples
+	var leftVolume : Int; // 32768 is maximum volume
+	var rightVolume : Int;
+}
+
+typedef SoundStream = {
+	var version : Int;
+	var playbackRate : SoundRate;
+	var playbackIs16bit : Bool;
+	var playbackIsStereo : Bool;
+	var streamFormat : SoundFormat;
+	var streamRate : SoundRate;
+	var streamIs16bit : Bool;
+	var streamIsStereo : Bool;
+	var samplesPerBlock : Int;
+	var seek : Null<Int>;
 }
 
 enum FontData {

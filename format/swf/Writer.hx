@@ -393,6 +393,80 @@ class Writer {
 		};
 	}
 
+	function writeStartSoundInfo( info : StartSoundInfo ) {
+		var flags = 0;
+		if( info.stop ) flags |= 32;
+		if( info.noMultiple ) flags |= 16;
+		if( info.envelope != null ) flags |= 8;
+		if( info.numLoops != null ) flags |= 4;
+		if( info.endPos != null ) flags |= 2;
+		if( info.startPos != null ) flags |= 1;
+		o.writeByte(flags);
+		if( info.startPos != null ) {
+			o.writeInt32(info.startPos);
+		}
+		if( info.endPos != null ) {
+			o.writeInt32(info.endPos);
+		}
+		if( info.numLoops != null ) {
+			o.writeUInt16(info.numLoops);
+		}
+		if( info.envelope != null ) {
+			o.writeByte(info.envelope.length);
+			for( point in info.envelope ) {
+				o.writeInt32(point.pos);
+				o.writeUInt16(point.leftVolume);
+				o.writeUInt16(point.rightVolume);
+			}
+		}
+	}
+
+	function writeSoundStream( stream: SoundStream ) {
+		var len = if( stream.streamFormat == SFMP3 ) 6 else 4;
+		var tag = switch( stream.version ) {
+			case 1: TagId.SoundStreamHead;
+			case 2: TagId.SoundStreamHead2;
+			case _: throw 'Invalid sound stream version';
+		}
+		writeTID(tag, len);
+
+		// Playback format
+		bits.writeBits(4, 0);
+		bits.writeBits(2, switch( stream.playbackRate ) {
+			case SR5k: 0;
+			case SR11k: 1;
+			case SR22k: 2;
+			case SR44k: 3;
+		});
+		bits.writeBit(stream.playbackIs16bit);
+		bits.writeBit(stream.playbackIsStereo);
+
+		// Stream format
+		bits.writeBits(4, switch( stream.streamFormat ) {
+			case SFNativeEndianUncompressed: 0;
+			case SFADPCM: 1;
+			case SFMP3: 2;
+			case SFLittleEndianUncompressed: 3;
+			case SFNellymoser16k: 4;
+			case SFNellymoser8k: 5;
+			case SFNellymoser: 6;
+			case SFSpeex: 11;
+		});
+		bits.writeBits(2, switch( stream.streamRate ) {
+			case SR5k: 0;
+			case SR11k: 1;
+			case SR22k: 2;
+			case SR44k: 3;
+		});
+		bits.writeBit(stream.streamIs16bit);
+		bits.writeBit(stream.streamIsStereo);
+		bits.flush();
+		o.writeUInt16(stream.samplesPerBlock);
+		if( stream.streamFormat == SFMP3 ) {
+			o.writeInt16(stream.seek);
+		}
+	}
+
 	function writeGradRecord(ver: Int, grad_record: GradRecord) {
 		switch(grad_record) {
 			case GRRGB(pos, col):
@@ -1420,6 +1494,34 @@ class Writer {
 
 		case TSound(data):
 			writeSound(data);
+
+		case TStartSound(id, info):
+			var length = 1;
+			if( info.startPos != null ) length += 4;
+			if( info.endPos != null ) length += 4;
+			if( info.numLoops != null ) length += 2;
+			if( info.envelope != null ) length += 1 + info.envelope.length * 6;
+			writeTID(TagId.StartSound, length);
+			o.writeUInt16(id);
+			writeStartSoundInfo(info);
+
+		case TStartSound2(className, info):
+			var length = 1;
+			if( info.startPos != null ) length += 4;
+			if( info.endPos != null ) length += 4;
+			if( info.numLoops != null ) length += 2;
+			if( info.envelope != null ) length += 1 + info.envelope.length * 6;
+			writeTID(TagId.StartSound2, length);
+			o.writeString(className);
+			writeStartSoundInfo(info);
+
+		case TSoundStream(stream):
+			writeSoundStream(stream);
+
+		case TSoundStreamBlock(data):
+			writeTIDExt(TagId.SoundStreamBlock, data.length);
+			o.write(data);
+
 		case TScenes(scenes, labels):
 			trace("writing " + scenes + ", " + labels);
 			var scenesLength = Tools.intLength(scenes.length);

@@ -1010,6 +1010,83 @@ class Reader {
 		});
 	}
 
+	function readStartSoundInfo() {
+		var flags = i.readByte();
+		var startPos = if( flags & 1 != 0 ) i.readInt32() else null;
+		var endPos = if( flags & 2 != 0 ) i.readInt32() else null;
+		var numLoops = if( flags & 4 != 0 ) i.readUInt16() else null;
+		var envelope =  if( flags & 8 != 0 ) {
+			var numPoints = i.readByte();
+			[for( _ in 0...numPoints ) {
+				{
+					pos : i.readInt32(),
+					leftVolume : i.readUInt16(),
+					rightVolume : i.readUInt16(),
+				}
+			}];
+		} else null;
+		return {
+			startPos : startPos,
+			endPos : endPos,
+			numLoops : numLoops,
+			envelope : envelope,
+			noMultiple : flags & 16 != 0,
+			stop : flags & 32 != 0,
+		};
+	}
+
+	function readSoundStream( version : Int ) {
+		bits.reset();
+		bits.readBits(4); // Reserved
+
+		// Playback format
+		var playbackRate = switch( bits.readBits(2) ) {
+			case 0: SR5k;
+			case 1: SR11k;
+			case 2: SR22k;
+			case 3: SR44k;
+			default: throw error();
+		};
+		var playbackIs16bit = bits.readBit();
+		var playbackIsStereo = bits.readBit();
+
+		// Stream format
+		var streamFormat = switch( bits.readBits(4) ) {
+			case 0: SFNativeEndianUncompressed;
+			case 1: SFADPCM;
+			case 2: SFMP3;
+			case 3: SFLittleEndianUncompressed;
+			case 4: SFNellymoser16k;
+			case 5: SFNellymoser8k;
+			case 6: SFNellymoser;
+			case 11: SFSpeex;
+			default: throw error();
+		};
+		var streamRate = switch( bits.readBits(2) ) {
+			case 0: SR5k;
+			case 1: SR11k;
+			case 2: SR22k;
+			case 3: SR44k;
+			default: throw error();
+		};
+		var streamIs16bit = bits.readBit();
+		var streamIsStereo = bits.readBit();
+		var samplesPerBlock = i.readUInt16();
+		var seek = if( streamFormat == SFMP3 ) i.readInt16() else null;
+		return {
+			version : version,
+			playbackRate : playbackRate,
+			playbackIs16bit : playbackIs16bit,
+			playbackIsStereo : playbackIsStereo,
+			streamFormat : streamFormat,
+			streamRate : streamRate,
+			streamIs16bit : streamIs16bit,
+			streamIsStereo : streamIsStereo,
+			samplesPerBlock : samplesPerBlock,
+			seek : seek,
+		};
+	}
+
 	function readLanguage() {
 		return switch(i.readByte()) {
 			case 0: LangCode.LCNone;
@@ -1368,8 +1445,23 @@ class Reader {
 			var id = i.readUInt16();
 			if ( readInt() != 0 ) throw error();
 			TBinaryData(id, i.read(len - 6));
+
 		case TagId.DefineSound:
 			readSound(len);
+		case TagId.StartSound:
+			var id = i.readUInt16();
+			var info = readStartSoundInfo();
+			TStartSound(id, info);
+		case TagId.StartSound2:
+			var className = readUTF8Bytes().toString();
+			var info = readStartSoundInfo();
+			TStartSound2(className, info);
+		case TagId.SoundStreamHead:
+			TSoundStream(readSoundStream(1));
+		case TagId.SoundStreamHead2:
+			TSoundStream(readSoundStream(2));
+		case TagId.SoundStreamBlock:
+			TSoundStreamBlock(i.read(len));
 		default:
 			var data = i.read(len);
 			TUnknown(id,data);

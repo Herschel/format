@@ -189,6 +189,15 @@ class Tools {
 			["sid", s.sid, "format", s.format, "rate", s.rate, "16bit", s.is16bit, "stereo", s.isStereo, "samples", s.samples, "data", data ];
 		case TDoActions(data) : ["data", hex(data, max)];
 		case TScenes(scenes, labels) : ["scenes", scenes, "labels", labels];
+		case TStartSound(id, data):
+			["id", id, "stop", data.stop, "nomultiple", data.noMultiple, "loops", data.numLoops, "start", data.startPos, "end", data.endPos, "envelope", Std.string(data.envelope)];
+		case TStartSound2(className, data):
+			["class", className, "stop", data.stop, "nomultiple", data.noMultiple, "loops", data.numLoops, "start", data.startPos, "end", data.endPos, "envelope", Std.string(data.envelope)];
+		case TSoundStream(s):
+			["ver", s.version, "playbackrate", s.playbackRate, "playback16bit", s.playbackIs16bit, "playbackstereo", s.playbackIsStereo,
+			"streamformat", s.streamFormat, "streamrate", s.streamRate, "stream16bit", s.streamIs16bit, "streamstereo", s.streamIsStereo,
+			"samples", s.samplesPerBlock, "seek", s.seek];
+		case TSoundStreamBlock(data): ["data", hex(data,max)];
 		case TUnknown(id,data): ["id",id,"data",hex(data,max)];
 		}
 		var b = new StringBuf();
