@@ -849,7 +849,7 @@ class Reader {
 		var endBounds = readRect();
 		switch(ver) {
 			case 1:
-				readInt(); // ?
+				var offsetToEndEdges = readInt();
 				var fillStyles = readMorphFillStyles(ver);
 				var lineStyles = readMorph1LineStyles();
 				var startEdges = readShapeWithoutStyle(3); // Assume DefineShape3
