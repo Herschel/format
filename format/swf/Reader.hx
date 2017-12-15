@@ -334,16 +334,26 @@ class Reader {
 	function readShapeWithStyle(ver : Int) : ShapeWithStyleData {
 		var fillStyles = readFillStyles(ver);
 		var lineStyles = readLineStyles(ver);
+		bits.reset();
+		var fillBits = bits.readBits(4);
+		var lineBits = bits.readBits(4);
 		return {
 			fillStyles: fillStyles,
 			lineStyles: lineStyles,
-			shapeRecords: readShapeRecords(ver)
+			fillBits: fillBits,
+			lineBits: lineBits,
+			shapeRecords: readShapeRecords(ver, fillBits, lineBits)
 		};
 	}
 	
 	function readShapeWithoutStyle(ver : Int) : ShapeWithoutStyleData {
+		bits.reset();
+		var fillBits = bits.readBits(4);
+		var lineBits = bits.readBits(4);
 		return {
-			shapeRecords: readShapeRecords(ver)
+			fillBits: fillBits,
+			lineBits: lineBits,
+			shapeRecords: readShapeRecords(ver, fillBits, lineBits)
 		};
 	}
 
@@ -351,11 +361,7 @@ class Reader {
 	//
 	// reads a SHAPE field
 	//
-	function readShapeRecords(ver : Int) : Array<ShapeRecord> {
-		bits.reset();
-		var fillBits = bits.readBits(4);
-		var lineBits = bits.readBits(4);
-
+	function readShapeRecords(ver : Int, fillBits: Int, lineBits: Int) : Array<ShapeRecord> {
 		var recs = new Array<ShapeRecord>();
 
 		do {
@@ -436,7 +442,9 @@ class Reader {
 						lineBits = bits.readBits(4);
 						cdata.newStyles = {
 							fillStyles: fst,
-							lineStyles: lst
+							lineStyles: lst,
+							fillBits: fillBits,
+							lineBits: lineBits
 						}
 					}
 					recs.push(SHRChange(cdata));
@@ -854,7 +862,6 @@ class Reader {
 				var fillStyles = readMorphFillStyles(ver);
 				var lineStyles = readMorph1LineStyles();
 				var startEdges = readShapeWithoutStyle(3); // Assume DefineShape3
-				bits.reset();
 				var endEdges = readShapeWithoutStyle(3);
 
 				return TMorphShape(id, MSDShape1({
@@ -874,7 +881,7 @@ class Reader {
 				var useNonScalingStrokes = bits.readBit();
 				var useScalingStrokes = bits.readBit();
 				bits.reset();
-				readInt(); // ?
+				readInt(); // Offset to EndEdges.
 				var fillStyles = readMorphFillStyles(ver);
 				var lineStyles = readMorph2LineStyles();
 				var startEdges = readShapeWithoutStyle(4); // Assume DefineShape4

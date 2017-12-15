@@ -788,9 +788,9 @@ class Writer {
 	function writeShapeWithoutStyle(ver: Int, data: ShapeWithoutStyleData) {
 		var style_info: ShapeStyleInfo = {
 			numFillStyles: 0,
-			fillBits: 1,
+			fillBits: data.fillBits,
 			numLineStyles: 0,
-			lineBits: 1
+			lineBits: data.lineBits
 		};
 
 		bits.writeBits(4, style_info.fillBits);

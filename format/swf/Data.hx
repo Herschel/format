@@ -205,6 +205,8 @@ typedef Shape4Data = {
 
 // used by DefineFont
 typedef ShapeWithoutStyleData = {
+	var fillBits: Int;
+	var lineBits: Int;
 	var shapeRecords : Array<ShapeRecord>;
 }
 
@@ -212,6 +214,8 @@ typedef ShapeWithoutStyleData = {
 typedef ShapeWithStyleData = {
 	var fillStyles : Array<FillStyle>;
 	var lineStyles : Array<LineStyle>;
+	var fillBits: Int;
+	var lineBits: Int;
 	var shapeRecords : Array<ShapeRecord>;
 }
 
@@ -242,6 +246,8 @@ typedef SCRIndex = {
 typedef SCRNewStyles = {
 	var fillStyles : Array<FillStyle>;
 	var lineStyles : Array<LineStyle>;
+	var fillBits: Int;
+	var lineBits: Int;
 }
 
 enum FillStyle {
