@@ -151,7 +151,7 @@ class Writer {
 
 			var sx = Tools.toFixed16(m.scale.x);
 			var sy = Tools.toFixed16(m.scale.y);
-			var nbits = signedMinBits([sx, sy]);
+			var nbits = Tools.minBits([sx, sy]) + 1;
 
 			bits.writeBits(5, nbits);
 			bits.writeBits(nbits, sx);
@@ -736,8 +736,8 @@ class Writer {
 					writeFillStyles(ver, data.newStyles.fillStyles);
 					writeLineStyles(ver, data.newStyles.lineStyles);
 
-					style_info.numFillStyles += data.newStyles.fillStyles.length;
-					style_info.numLineStyles += data.newStyles.lineStyles.length;
+					style_info.numFillStyles = data.newStyles.fillStyles.length;
+					style_info.numLineStyles = data.newStyles.lineStyles.length;
 					style_info.fillBits = Tools.minBits([style_info.numFillStyles]);
 					style_info.lineBits = Tools.minBits([style_info.numLineStyles]);
 
