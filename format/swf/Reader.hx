@@ -652,6 +652,7 @@ class Reader {
 
 		var shapeBounds = readRect();
 		var edgeBounds = readRect();
+		bits.reset();
 		bits.readBits(5);
 		var useWinding = bits.readBit();
 		var useNonScalingStroke = bits.readBit();
