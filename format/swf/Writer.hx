@@ -60,23 +60,9 @@ class Writer {
 		writeEnd();
 	}
 
-	function signedMinBits(values: Array<Int>): Int {
-		var x: Int = 0;
-		var allZeroes = true;
-		for (v in values) {
-			if (v != 0) {
-				allZeroes = false;
-				break;
-			}
-		}
-		if (! allZeroes) {
-			x = Tools.minBits(values) + 1;
-		}
-		return x;
-	}
 
 	function writeRect(r) {
-		var nbits = signedMinBits([r.left, r.right, r.top, r.bottom]);
+		var nbits = Tools.signedMinBits([r.left, r.right, r.top, r.bottom]);
 
 		bits.writeBits(5,nbits);
 		bits.writeBits(nbits,r.left);
@@ -165,7 +151,7 @@ class Writer {
 
 			var rs0 = Tools.toFixed16(m.rotate.rs0);
 			var rs1 = Tools.toFixed16(m.rotate.rs1);
-			var nbits = signedMinBits([rs0, rs1]);
+			var nbits = Tools.signedMinBits([rs0, rs1]);
 
 			bits.writeBits(5, nbits);
 			bits.writeBits(nbits, rs0);
@@ -174,7 +160,7 @@ class Writer {
 		} else
 			bits.writeBit(false);
 
-		var nbits = signedMinBits([m.translate.x, m.translate.y]);
+		var nbits = Tools.signedMinBits([m.translate.x, m.translate.y]);
 
 		bits.writeBits(5, nbits);
 		bits.writeBits(nbits, m.translate.x);

@@ -97,6 +97,14 @@ class Tools {
 		return x;
 	}
 
+	public static function signedMinBits(values: Array<Int>): Int {
+		var x: Int = minBits(values);
+		if (x != 0) {
+			x += 1;
+		}
+		return x;
+	}
+
 	public static function hex( b : haxe.io.Bytes, ?max : Int ) {
 		var hex = ["0".code,"1".code,"2".code,"3".code,"4".code,"5".code,"6".code,"7".code,"8".code,"9".code,"A".code,"B".code,"C".code,"D".code,"E".code,"F".code];
 		var count = if( max == null || b.length <= max ) b.length else max;
