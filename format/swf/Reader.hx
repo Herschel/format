@@ -340,8 +340,6 @@ class Reader {
 		return {
 			fillStyles: fillStyles,
 			lineStyles: lineStyles,
-			fillBits: fillBits,
-			lineBits: lineBits,
 			shapeRecords: readShapeRecords(ver, fillBits, lineBits)
 		};
 	}
@@ -351,8 +349,6 @@ class Reader {
 		var fillBits = bits.readBits(4);
 		var lineBits = bits.readBits(4);
 		return {
-			fillBits: fillBits,
-			lineBits: lineBits,
 			shapeRecords: readShapeRecords(ver, fillBits, lineBits)
 		};
 	}
@@ -443,8 +439,6 @@ class Reader {
 						cdata.newStyles = {
 							fillStyles: fst,
 							lineStyles: lst,
-							fillBits: fillBits,
-							lineBits: lineBits
 						}
 					}
 					recs.push(SHRChange(cdata));

@@ -36,9 +36,7 @@ import format.swf.Constants;
  *	and the minimum number of bits required for indexing.
 */
 typedef ShapeStyleInfo = {
-	var numFillStyles: Int;
 	var fillBits: Int;
-	var numLineStyles: Int;
 	var lineBits: Int;
 }
 
@@ -722,10 +720,8 @@ class Writer {
 					writeFillStyles(ver, data.newStyles.fillStyles);
 					writeLineStyles(ver, data.newStyles.lineStyles);
 
-					style_info.numFillStyles = data.newStyles.fillStyles.length;
-					style_info.numLineStyles = data.newStyles.lineStyles.length;
-					style_info.fillBits = Tools.minBits([style_info.numFillStyles]);
-					style_info.lineBits = Tools.minBits([style_info.numLineStyles]);
+					style_info.fillBits = Tools.minBits([data.newStyles.fillStyles.length]);
+					style_info.lineBits = Tools.minBits([data.newStyles.lineStyles.length]);
 
 					bits.writeBits(4, style_info.fillBits);
 					bits.writeBits(4, style_info.lineBits);
@@ -771,12 +767,10 @@ class Writer {
 		}
 	}
 
-	function writeShapeWithoutStyle(ver: Int, data: ShapeWithoutStyleData) {
+	function writeShapeWithoutStyle(ver: Int, data: ShapeWithoutStyleData, numFillStyles: Int, numLineStyles: Int) {
 		var style_info: ShapeStyleInfo = {
-			numFillStyles: 0,
-			fillBits: data.fillBits,
-			numLineStyles: 0,
-			lineBits: data.lineBits
+			fillBits: Tools.minBits([numFillStyles]),
+			lineBits: Tools.minBits([numLineStyles]),
 		};
 
 		bits.writeBits(4, style_info.fillBits);
@@ -794,9 +788,7 @@ class Writer {
 		writeLineStyles(ver, data.lineStyles);
 
 		var style_info: ShapeStyleInfo = {
-			numFillStyles: data.fillStyles.length,
 			fillBits: Tools.minBits([data.fillStyles.length]),
-			numLineStyles: data.lineStyles.length,
 			lineBits: Tools.minBits([data.lineStyles.length]),
 		};
 
@@ -1042,14 +1034,14 @@ class Writer {
 
 				writeMorphFillStyles(1, sh1data.fillStyles);
 				writeMorph1LineStyles(sh1data.lineStyles);
-				writeShapeWithoutStyle(3, sh1data.startEdges);
+				writeShapeWithoutStyle(3, sh1data.startEdges, sh1data.fillStyles.length, sh1data.lineStyles.length);
 				bits.flush();
 
 				var part_data = closeTMP(old);
 
 				writeInt(part_data.length);
 				o.write(part_data);
-				writeShapeWithoutStyle(3, sh1data.endEdges);
+				writeShapeWithoutStyle(3, sh1data.endEdges, 0, 0);
 
 			case MSDShape2(sh2data):
 				writeRect(sh2data.startBounds);
@@ -1065,14 +1057,14 @@ class Writer {
 
 				writeMorphFillStyles(1, sh2data.fillStyles);
 				writeMorph2LineStyles(sh2data.lineStyles);
-				writeShapeWithoutStyle(4, sh2data.startEdges);
+				writeShapeWithoutStyle(4, sh2data.startEdges, sh2data.fillStyles.length, sh2data.lineStyles.length);
 				bits.flush();
 
 				var part_data = closeTMP(old);
 
 				writeInt(part_data.length);
 				o.write(part_data);
-				writeShapeWithoutStyle(4, sh2data.endEdges);
+				writeShapeWithoutStyle(4, sh2data.endEdges, 0, 0);
 		}
 
 		bits.flush();
@@ -1100,7 +1092,7 @@ class Writer {
 			offsets.push(offs);
 
 			var old = openTMP();
-			writeShapeWithoutStyle(1, shape);
+			writeShapeWithoutStyle(1, shape, 1, 0);
 			bits.flush();
 			var shape_data = closeTMP(old);
 
