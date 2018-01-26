@@ -500,10 +500,11 @@ class Writer {
 
 		var num_records = grad.data.length;
 
-		if(ver < 4) {
-			if(num_records > 8)
-				throw "Gradient supports at most 8 control points ("+num_records+" has bee given) when shape verison is lower than 4!";
-		} else if(num_records > 15)
+		//if(ver < 4) {
+		//	if(num_records > 8)
+		//		throw "Gradient supports at most 8 control points ("+num_records+" has been given) when shape version is lower than 4!";
+		//} else 
+		if(num_records > 15)
 			throw "Gradient supports at most 15 control points ("+num_records+" has been given) at shape version 4!";
 
 		bits.writeBits(2, spread_mode);
