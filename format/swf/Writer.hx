@@ -495,8 +495,8 @@ class Writer {
 			case IMReserved1:	2;
 			case IMReserved2:	3;
 		};
-		if(ver < 4 && (spread_mode != 0 || interpolation_mode != 0))
-			throw "Spread must be Pad and interpolation mode must be Normal RGB in gradient specification when shape version is lower than 4!";
+		//if(ver < 4 && (spread_mode != 0 || interpolation_mode != 0))
+		//	throw "Spread must be Pad and interpolation mode must be Normal RGB in gradient specification when shape version is lower than 4!";
 
 		var num_records = grad.data.length;
 
