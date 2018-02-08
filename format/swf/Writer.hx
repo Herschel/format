@@ -518,8 +518,8 @@ class Writer {
 	}
 
 	function writeFocalGradient(ver: Int, grad: FocalGradient) {
-		if(ver < 4)
-			throw "Focal gradient only supported in shape versions higher than 3!";
+		//if(ver < 4)
+		//	throw "Focal gradient only supported in shape versions higher than 3!";
 
 		writeGradient(ver, grad.data);
 		writeFixed8(grad.focalPoint);
@@ -552,8 +552,8 @@ class Writer {
 				writeGradient(ver, grad);
 
 			case FSFocalGradient(mat, grad):
-				if(ver < 3)
-					throw "Focal gradient fill style only supported with Shape versions higher than 3!";
+				//if(ver < 3)
+				//	throw "Focal gradient fill style only supported with Shape versions higher than 3!";
 
 				o.writeByte(FillStyleTypeId.FocalRadialGradient);
 				writeMatrix(mat);
