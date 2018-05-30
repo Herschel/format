@@ -1344,18 +1344,18 @@ class Reader {
 			null;
 		case TagId.ShowFrame:
 			TShowFrame;
-		case TagId.DefineShape:
-			readShape(len,1);
-		case TagId.DefineShape2:
-			readShape(len,2);
-		case TagId.DefineShape3:
-			readShape(len,3);
-		case TagId.DefineShape4:
-			readShape(len,4);
-		case TagId.DefineMorphShape:
-			readMorphShape(1);
-		case TagId.DefineMorphShape2:
-			readMorphShape(2);
+		//case TagId.DefineShape:
+		//	readShape(len,1);
+		//case TagId.DefineShape2:
+		//	readShape(len,2);
+		//case TagId.DefineShape3:
+		//	readShape(len,3);
+		//case TagId.DefineShape4:
+		//	readShape(len,4);
+		//case TagId.DefineMorphShape:
+		//	readMorphShape(1);
+		//case TagId.DefineMorphShape2:
+		//	readMorphShape(2);
 		
 		case TagId.DefineFont:
 			readFont(len, 1);
