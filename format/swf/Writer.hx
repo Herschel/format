@@ -36,9 +36,7 @@ import format.swf.Constants;
  *	and the minimum number of bits required for indexing.
 */
 typedef ShapeStyleInfo = {
-	var numFillStyles: Int;
 	var fillBits: Int;
-	var numLineStyles: Int;
 	var lineBits: Int;
 }
 
@@ -60,8 +58,9 @@ class Writer {
 		writeEnd();
 	}
 
+
 	function writeRect(r) {
-		var nbits = Tools.minBits([r.left, r.right, r.top, r.bottom]) + 1;
+		var nbits = Tools.signedMinBits([r.left, r.right, r.top, r.bottom]);
 
 		bits.writeBits(5,nbits);
 		bits.writeBits(nbits,r.left);
@@ -150,7 +149,7 @@ class Writer {
 
 			var rs0 = Tools.toFixed16(m.rotate.rs0);
 			var rs1 = Tools.toFixed16(m.rotate.rs1);
-			var nbits = Tools.minBits([rs0, rs1]) + 1;
+			var nbits = Tools.signedMinBits([rs0, rs1]);
 
 			bits.writeBits(5, nbits);
 			bits.writeBits(nbits, rs0);
@@ -159,7 +158,7 @@ class Writer {
 		} else
 			bits.writeBit(false);
 
-		var nbits = Tools.minBits([m.translate.x, m.translate.y]) + 1;
+		var nbits = Tools.signedMinBits([m.translate.x, m.translate.y]);
 
 		bits.writeBits(5, nbits);
 		bits.writeBits(nbits, m.translate.x);
@@ -496,15 +495,16 @@ class Writer {
 			case IMReserved1:	2;
 			case IMReserved2:	3;
 		};
-		if(ver < 4 && (spread_mode != 0 || interpolation_mode != 0))
-			throw "Spread must be Pad and interpolation mode must be Normal RGB in gradient specification when shape version is lower than 4!";
+		//if(ver < 4 && (spread_mode != 0 || interpolation_mode != 0))
+		//	throw "Spread must be Pad and interpolation mode must be Normal RGB in gradient specification when shape version is lower than 4!";
 
 		var num_records = grad.data.length;
 
-		if(ver < 4) {
-			if(num_records > 8)
-				throw "Gradient supports at most 8 control points ("+num_records+" has bee given) when shape verison is lower than 4!";
-		} else if(num_records > 15)
+		//if(ver < 4) {
+		//	if(num_records > 8)
+		//		throw "Gradient supports at most 8 control points ("+num_records+" has been given) when shape version is lower than 4!";
+		//} else 
+		if(num_records > 15)
 			throw "Gradient supports at most 15 control points ("+num_records+" has been given) at shape version 4!";
 
 		bits.writeBits(2, spread_mode);
@@ -518,8 +518,8 @@ class Writer {
 	}
 
 	function writeFocalGradient(ver: Int, grad: FocalGradient) {
-		if(ver < 4)
-			throw "Focal gradient only supported in shape versions higher than 3!";
+		//if(ver < 4)
+		//	throw "Focal gradient only supported in shape versions higher than 3!";
 
 		writeGradient(ver, grad.data);
 		writeFixed8(grad.focalPoint);
@@ -552,8 +552,8 @@ class Writer {
 				writeGradient(ver, grad);
 
 			case FSFocalGradient(mat, grad):
-				if(ver < 3)
-					throw "Focal gradient fill style only supported with Shape versions higher than 3!";
+				//if(ver < 3)
+				//	throw "Focal gradient fill style only supported with Shape versions higher than 3!";
 
 				o.writeByte(FillStyleTypeId.FocalRadialGradient);
 				writeMatrix(mat);
@@ -721,10 +721,8 @@ class Writer {
 					writeFillStyles(ver, data.newStyles.fillStyles);
 					writeLineStyles(ver, data.newStyles.lineStyles);
 
-					style_info.numFillStyles += data.newStyles.fillStyles.length;
-					style_info.numLineStyles += data.newStyles.lineStyles.length;
-					style_info.fillBits = Tools.minBits([style_info.numFillStyles]);
-					style_info.lineBits = Tools.minBits([style_info.numLineStyles]);
+					style_info.fillBits = Tools.minBits([data.newStyles.fillStyles.length]);
+					style_info.lineBits = Tools.minBits([data.newStyles.lineStyles.length]);
 
 					bits.writeBits(4, style_info.fillBits);
 					bits.writeBits(4, style_info.lineBits);
@@ -770,12 +768,10 @@ class Writer {
 		}
 	}
 
-	function writeShapeWithoutStyle(ver: Int, data: ShapeWithoutStyleData) {
+	function writeShapeWithoutStyle(ver: Int, data: ShapeWithoutStyleData, numFillStyles: Int, numLineStyles: Int) {
 		var style_info: ShapeStyleInfo = {
-			numFillStyles: 0,
-			fillBits: 1,
-			numLineStyles: 0,
-			lineBits: 1
+			fillBits: Tools.minBits([numFillStyles]),
+			lineBits: Tools.minBits([numLineStyles]),
 		};
 
 		bits.writeBits(4, style_info.fillBits);
@@ -793,9 +789,7 @@ class Writer {
 		writeLineStyles(ver, data.lineStyles);
 
 		var style_info: ShapeStyleInfo = {
-			numFillStyles: data.fillStyles.length,
 			fillBits: Tools.minBits([data.fillStyles.length]),
-			numLineStyles: data.lineStyles.length,
 			lineBits: Tools.minBits([data.lineStyles.length]),
 		};
 
@@ -870,6 +864,7 @@ class Writer {
 		if(num < 1 || num > 8)
 			throw "Number of specified morph gradients ("+num+") must be in range 1..8";
 
+		o.writeByte(num);
 		for(grad in gradients) {
 			writeMorphGradient(ver, grad);
 		}
@@ -889,7 +884,7 @@ class Writer {
 				writeMorphGradients(ver, gradients);
 
 			case MFSRadialGradient(startMatrix, endMatrix, gradients):
-				o.writeByte(FillStyleTypeId.LinearGradient);
+				o.writeByte(FillStyleTypeId.RadialGradient);
 				writeMatrix(startMatrix);
 				writeMatrix(endMatrix);
 				writeMorphGradients(ver, gradients);
@@ -1040,14 +1035,14 @@ class Writer {
 
 				writeMorphFillStyles(1, sh1data.fillStyles);
 				writeMorph1LineStyles(sh1data.lineStyles);
-				writeShapeWithoutStyle(3, sh1data.startEdges);
+				writeShapeWithoutStyle(3, sh1data.startEdges, sh1data.fillStyles.length, sh1data.lineStyles.length);
 				bits.flush();
 
 				var part_data = closeTMP(old);
 
 				writeInt(part_data.length);
 				o.write(part_data);
-				writeShapeWithoutStyle(3, sh1data.endEdges);
+				writeShapeWithoutStyle(3, sh1data.endEdges, 0, 0);
 
 			case MSDShape2(sh2data):
 				writeRect(sh2data.startBounds);
@@ -1063,14 +1058,14 @@ class Writer {
 
 				writeMorphFillStyles(1, sh2data.fillStyles);
 				writeMorph2LineStyles(sh2data.lineStyles);
-				writeShapeWithoutStyle(4, sh2data.startEdges);
+				writeShapeWithoutStyle(4, sh2data.startEdges, sh2data.fillStyles.length, sh2data.lineStyles.length);
 				bits.flush();
 
 				var part_data = closeTMP(old);
 
 				writeInt(part_data.length);
 				o.write(part_data);
-				writeShapeWithoutStyle(4, sh2data.endEdges);
+				writeShapeWithoutStyle(4, sh2data.endEdges, 0, 0);
 		}
 
 		bits.flush();
@@ -1098,7 +1093,7 @@ class Writer {
 			offsets.push(offs);
 
 			var old = openTMP();
-			writeShapeWithoutStyle(1, shape);
+			writeShapeWithoutStyle(1, shape, 1, 0);
 			bits.flush();
 			var shape_data = closeTMP(old);
 

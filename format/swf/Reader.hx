@@ -334,16 +334,22 @@ class Reader {
 	function readShapeWithStyle(ver : Int) : ShapeWithStyleData {
 		var fillStyles = readFillStyles(ver);
 		var lineStyles = readLineStyles(ver);
+		bits.reset();
+		var fillBits = bits.readBits(4);
+		var lineBits = bits.readBits(4);
 		return {
 			fillStyles: fillStyles,
 			lineStyles: lineStyles,
-			shapeRecords: readShapeRecords(ver)
+			shapeRecords: readShapeRecords(ver, fillBits, lineBits)
 		};
 	}
 	
 	function readShapeWithoutStyle(ver : Int) : ShapeWithoutStyleData {
+		bits.reset();
+		var fillBits = bits.readBits(4);
+		var lineBits = bits.readBits(4);
 		return {
-			shapeRecords: readShapeRecords(ver)
+			shapeRecords: readShapeRecords(ver, fillBits, lineBits)
 		};
 	}
 
@@ -351,11 +357,7 @@ class Reader {
 	//
 	// reads a SHAPE field
 	//
-	function readShapeRecords(ver : Int) : Array<ShapeRecord> {
-		bits.reset();
-		var fillBits = bits.readBits(4);
-		var lineBits = bits.readBits(4);
-
+	function readShapeRecords(ver : Int, fillBits: Int, lineBits: Int) : Array<ShapeRecord> {
 		var recs = new Array<ShapeRecord>();
 
 		do {
@@ -436,7 +438,7 @@ class Reader {
 						lineBits = bits.readBits(4);
 						cdata.newStyles = {
 							fillStyles: fst,
-							lineStyles: lst
+							lineStyles: lst,
 						}
 					}
 					recs.push(SHRChange(cdata));
@@ -652,6 +654,7 @@ class Reader {
 
 		var shapeBounds = readRect();
 		var edgeBounds = readRect();
+		bits.reset();
 		bits.readBits(5);
 		var useWinding = bits.readBit();
 		var useNonScalingStroke = bits.readBit();
@@ -849,11 +852,10 @@ class Reader {
 		var endBounds = readRect();
 		switch(ver) {
 			case 1:
-				readInt(); // ?
+				var offsetToEndEdges = readInt();
 				var fillStyles = readMorphFillStyles(ver);
 				var lineStyles = readMorph1LineStyles();
 				var startEdges = readShapeWithoutStyle(3); // Assume DefineShape3
-				bits.reset();
 				var endEdges = readShapeWithoutStyle(3);
 
 				return TMorphShape(id, MSDShape1({
@@ -873,7 +875,7 @@ class Reader {
 				var useNonScalingStrokes = bits.readBit();
 				var useScalingStrokes = bits.readBit();
 				bits.reset();
-				readInt(); // ?
+				readInt(); // Offset to EndEdges.
 				var fillStyles = readMorphFillStyles(ver);
 				var lineStyles = readMorph2LineStyles();
 				var startEdges = readShapeWithoutStyle(4); // Assume DefineShape4
@@ -1342,18 +1344,18 @@ class Reader {
 			null;
 		case TagId.ShowFrame:
 			TShowFrame;
-		case TagId.DefineShape:
-			readShape(len,1);
-		case TagId.DefineShape2:
-			readShape(len,2);
-		case TagId.DefineShape3:
-			readShape(len,3);
-		case TagId.DefineShape4:
-			readShape(len,4);
-		case TagId.DefineMorphShape:
-			readMorphShape(1);
-		case TagId.DefineMorphShape2:
-			readMorphShape(2);
+		//case TagId.DefineShape:
+		//	readShape(len,1);
+		//case TagId.DefineShape2:
+		//	readShape(len,2);
+		//case TagId.DefineShape3:
+		//	readShape(len,3);
+		//case TagId.DefineShape4:
+		//	readShape(len,4);
+		//case TagId.DefineMorphShape:
+		//	readMorphShape(1);
+		//case TagId.DefineMorphShape2:
+		//	readMorphShape(2);
 		
 		case TagId.DefineFont:
 			readFont(len, 1);
