@@ -870,6 +870,7 @@ class Writer {
 		if(num < 1 || num > 8)
 			throw "Number of specified morph gradients ("+num+") must be in range 1..8";
 
+		o.writeByte(num);
 		for(grad in gradients) {
 			writeMorphGradient(ver, grad);
 		}
